@@ -8,6 +8,9 @@
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include "stb_image_resize.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 unsigned char* read_image(const char* filepath)
 {
 	int x, y, n;
@@ -27,6 +30,11 @@ unsigned char* read_image(const char* filepath)
 void free_img(void* data)
 {
 	stbi_image_free(data);
+}
+
+void write_img(void* data)
+{
+	stbi_write_png("testoutput.png", 128, 128, 3, data, 0);
 }
 
 /*
