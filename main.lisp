@@ -88,7 +88,7 @@
                      (r (deref *lenna* (+ pixel-offset 0)))
                      (g (deref *lenna* (+ pixel-offset 1)))
                      (b (deref *lenna* (+ pixel-offset 2))))
-                (* 1 (calculate-color r g b))))))
+                (* 4 (calculate-color r g b))))))
     array))
 
 (aref *colors-buffer* (+ 125 (* 0 128)))
