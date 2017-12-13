@@ -6,7 +6,7 @@
   (make-pixel :r r :g g :b b))
 
 (defparameter *base-color-array*
-  (vector (mpi 128 128 128) ;; 0
+  (vector ;(mpi 128 128 128) ;; 0
           (mpi 127 178 56)  ;; 1
           (mpi 247 233 163) ;; 2
           (mpi 199 199 199) ;; 3
@@ -99,12 +99,13 @@
     a))
 
 (defun calculate-color (r g b)
-  (array-min-index
-   (array-map *full-color* (lambda (pixel)
-                             (color-distance r g b
-                                             (pixel-r pixel)
-                                             (pixel-g pixel)
-                                             (pixel-b pixel))))))
+  (+ 4
+     (array-min-index
+      (array-map *full-color* (lambda (pixel)
+                                (color-distance r g b
+                                                (pixel-r pixel)
+                                                (pixel-g pixel)
+                                                (pixel-b pixel)))))))
 
 ;; ------------------------------------------------------------------------------
 (defmacro rgbf= (a b)

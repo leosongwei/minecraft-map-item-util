@@ -20,7 +20,10 @@
 ;;  "test.dat")
 (load "color.lisp")
 
-(defparameter *lenna* (with-alien ((pathname c-string (make-alien-string "./Lenna.png")))
+;; (defparameter *lenna* (with-alien ((pathname c-string (make-alien-string "./Lenna.png")))
+;;                         (read-image pathname)))
+
+(defparameter *lenna* (with-alien ((pathname c-string (make-alien-string "./jiangzhuxi.jpg")))
                         (read-image pathname)))
 
 (defparameter *nbt-head*
@@ -70,9 +73,9 @@
       (let* ((pixel-offset (+ x (* y 128)))
              (id (aref *colors-buffer* pixel-offset))
              (location (* 3 pixel-offset))
-             (r (pixel-r (aref *full-color* id)))
-             (g (pixel-g (aref *full-color* id)))
-             (b (pixel-b (aref *full-color* id))))
+             (r (pixel-r (aref *full-color* (- id 4))))
+             (g (pixel-g (aref *full-color* (- id 4))))
+             (b (pixel-b (aref *full-color* (- id 4)))))
         (setf (deref img-buffer (+ location 0)) r)
         (setf (deref img-buffer (+ location 1)) g)
         (setf (deref img-buffer (+ location 2)) b))))
