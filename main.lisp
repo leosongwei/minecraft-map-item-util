@@ -18,49 +18,10 @@
 ;;     (:empty ,(+ 10 10))
 ;;     #\a "abcdef"))
 ;;  "test.dat")
+(load "color.lisp")
 
 (defparameter *lenna* (with-alien ((pathname c-string (make-alien-string "./Lenna.png")))
                         (read-image pathname)))
-
-(defstruct pixel
-  (r 0 :type (unsigned-byte 8))
-  (g 0 :type (unsigned-byte 8))
-  (b 0 :type (unsigned-byte 8)))
-(defun mpi (r g b)
-  (make-pixel :r r :g g :b b))
-
-(defun color-distance (r g b rr gg bb)
-  (sqrt (+ (expt (- r rr) 2)
-           (expt (- g gg) 2)
-           (expt (- b bb) 2))))
-
-(load "./color-array.lisp")
-(length *color-array*)
-
-(defun array-min-index (array)
-  (let ((min-num (aref array 0))
-        (min-index 0))
-    (dotimes (i (length array))
-      (if (< (aref array i) min-num)
-          (progn (setf min-num (aref array i))
-                 (setf min-index i))))
-    min-index))
-
-(defun array-map (array function)
-  (let ((a (make-array (length array))))
-    (dotimes (i (length array))
-      (setf (aref a i) (funcall function (aref array i))))
-    a))
-
-(defun calculate-color (r g b)
-  (array-min-index
-   (array-map *color-array* (lambda (pixel)
-                              (color-distance r g b
-                                              (pixel-r pixel)
-                                              (pixel-g pixel)
-                                              (pixel-b pixel))))))
-
-
 
 (defparameter *nbt-head*
   (build-8bit-array
@@ -88,7 +49,7 @@
                      (r (deref *lenna* (+ pixel-offset 0)))
                      (g (deref *lenna* (+ pixel-offset 1)))
                      (b (deref *lenna* (+ pixel-offset 2))))
-                (* 4 (calculate-color r g b))))))
+                (calculate-color r g b)))))
     array))
 
 (aref *colors-buffer* (+ 125 (* 0 128)))
@@ -109,9 +70,9 @@
       (let* ((pixel-offset (+ x (* y 128)))
              (id (aref *colors-buffer* pixel-offset))
              (location (* 3 pixel-offset))
-             (r (pixel-r (aref *color-array* id)))
-             (g (pixel-g (aref *color-array* id)))
-             (b (pixel-b (aref *color-array* id))))
+             (r (pixel-r (aref *full-color* id)))
+             (g (pixel-g (aref *full-color* id)))
+             (b (pixel-b (aref *full-color* id))))
         (setf (deref img-buffer (+ location 0)) r)
         (setf (deref img-buffer (+ location 1)) g)
         (setf (deref img-buffer (+ location 2)) b))))
