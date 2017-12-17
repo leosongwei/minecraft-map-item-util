@@ -1,7 +1,11 @@
+;; (defstruct pixel
+;;   (r 0 :type (unsigned-byte 8))
+;;   (g 0 :type (unsigned-byte 8))
+;;   (b 0 :type (unsigned-byte 8)))
 (defstruct pixel
-  (r 0 :type (unsigned-byte 8))
-  (g 0 :type (unsigned-byte 8))
-  (b 0 :type (unsigned-byte 8)))
+  (r 0 :type integer)
+  (g 0 :type integer)
+  (b 0 :type integer))
 (defun mpi (r g b)
   (make-pixel :r r :g g :b b))
 
@@ -106,6 +110,57 @@
                                                 (pixel-r pixel)
                                                 (pixel-g pixel)
                                                 (pixel-b pixel)))))))
+;; ---------------------------------------------------------------
+;; FS dithering
+
+(defun color+ (p0 p1)
+  (mpi (+ (pixel-r p0) (pixel-r p1))
+       (+ (pixel-g p0) (pixel-g p1))
+       (+ (pixel-b p0) (pixel-b p1))))
+
+(defun color- (p0 p1)
+  (mpi (- (pixel-r p0) (pixel-r p1))
+       (- (pixel-g p0) (pixel-g p1))
+       (- (pixel-b p0) (pixel-b p1))))
+
+(defun color* (p0 ratio)
+  (mpi (floor (* (pixel-r p0) ratio))
+       (floor (* (pixel-g p0) ratio))
+       (floor (* (pixel-b p0) ratio))))
+
+(defun find-closest-palette-color (pixel)
+  (let ((index (array-min-index
+                (array-map *full-color*
+                           (lambda (p)
+                             (color-distance (pixel-r pixel)
+                                             (pixel-g pixel)
+                                             (pixel-b pixel)
+                                             (pixel-r p)
+                                             (pixel-g p)
+                                             (pixel-b p)))))))
+    (aref *full-color* index)))
+;;(find-closest-palette-color (mpi 102 54 68))
+
+(defun fs-dithering-f (image)
+  (do ((x 1 (+ x 1))) ((= x 127))
+    (do ((y 0 (+ y 1))) ((= y 127))
+      (let* ((old (aref image x y))
+             (new (find-closest-palette-color old))
+             (quant-error (color- old new)))
+        (setf (aref image x y) new)
+        (setf (aref image (1+ x) y)
+              (color+ (aref image (1+ x) y)
+                      (color* quant-error (/ 7 16))))
+        (setf (aref image (1- x) y)
+              (color+ (aref image (1- x) y)
+                      (color* quant-error (/ 3 16))))
+        (setf (aref image x (1+ y))
+              (color+ (aref image x (1+ y))
+                      (color* quant-error (/ 5 16))))
+        (setf (aref image (1+ x) (1+ y))
+              (color+ (aref image (1+ x) (1+ y))
+                      (color* quant-error (/ 1 16)))))))
+  image)
 
 ;; ------------------------------------------------------------------------------
 (defmacro rgbf= (a b)
@@ -148,3 +203,4 @@
            (expt (- s ss) 2)
            (expt (- l ll) 2))))
 
+;; -----------------------------------------------------

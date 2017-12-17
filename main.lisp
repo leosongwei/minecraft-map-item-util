@@ -42,18 +42,43 @@
 
 (defparameter *nbt-tail* (build-8bit-array '(00 00)))
 
-;; Colors[widthOffset + heightOffset * width]
-(defparameter *colors-buffer*
-  (let ((array (make-8bit-array (* 128 128))))
+(defparameter *image*
+  (let ((a (make-array '(128 128))))
     (dotimes (y 128)
       (dotimes (x 128)
-        (setf (aref array (+ x (* y 128)))
-              (let* ((pixel-offset (* 3 (+ x (* y 128))))
-                     (r (deref *lenna* (+ pixel-offset 0)))
-                     (g (deref *lenna* (+ pixel-offset 1)))
-                     (b (deref *lenna* (+ pixel-offset 2))))
+        (let* ((pixel-offset (* 3 (+ x (* y 128))))
+               (r (deref *lenna* (+ pixel-offset 0)))
+               (g (deref *lenna* (+ pixel-offset 1)))
+               (b (deref *lenna* (+ pixel-offset 2))))
+          (setf (aref a x y) (mpi r g b)))))
+    a))
+(fs-dithering-f *image*)
+
+(defun output-image (image)
+  (let ((a (make-8bit-array (* 128 128))))
+    (dotimes (x 128)
+      (dotimes (y 128)
+        (let* ((pixel (aref image x y))
+               (r (pixel-r pixel))
+               (g (pixel-g pixel))
+               (b (pixel-b pixel)))
+          (setf (aref a (+ x (* y 128)))
                 (calculate-color r g b)))))
-    array))
+    a))
+
+;; Colors[widthOffset + heightOffset * width]
+;; (defparameter *colors-buffer*
+;;   (let ((array (make-8bit-array (* 128 128))))
+;;     (dotimes (y 128)
+;;       (dotimes (x 128)
+;;         (setf (aref array (+ x (* y 128)))
+;;               (let* ((pixel-offset (* 3 (+ x (* y 128))))
+;;                      (r (deref *lenna* (+ pixel-offset 0)))
+;;                      (g (deref *lenna* (+ pixel-offset 1)))
+;;                      (b (deref *lenna* (+ pixel-offset 2))))
+;;                 (calculate-color r g b)))))
+;;     array))
+(defparameter *colors-buffer* (output-image *image*))
 
 (aref *colors-buffer* (+ 125 (* 0 128)))
 
