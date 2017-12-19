@@ -87,29 +87,60 @@
            (expt (- g gg) 2)
            (expt (- b bb) 2))))
 
-(defun array-min-index (array)
-  (let ((min-num (aref array 0))
-        (min-index 0))
-    (dotimes (i (length array))
-      (if (< (aref array i) min-num)
-          (progn (setf min-num (aref array i))
-                 (setf min-index i))))
-    min-index))
+(defun color-distance-w (r g b rr gg bb)
+  (let* ((ar (* 0.5 (+ r rr)))
+         (dr (- r rr))
+         (dg (- g gg))
+         (db (- b bb)))
+     (sqrt (+ (* (expt dr 2) (+ 2 (/ ar 256)))
+              (* (expt dg 2) 4)
+              (* (expt db 2) (+ 2 (/ (- 255 ar) 256)))))))
 
-(defun array-map (array function)
-  (let ((a (make-array (length array))))
-    (dotimes (i (length array))
-      (setf (aref a i) (funcall function (aref array i))))
-    a))
+(defmacro seq-min-index (sequence lambda after
+                         &optional (min 'min) (index 'index) (element 'element))
+  (let ((i (gensym))
+        (e (gensym))
+        (c (gensym))
+        (f (gensym)))
+    `(let* ((,element (aref ,sequence 0))
+            (,index 0)
+            (,f ,lambda)
+            (,min (funcall ,f ,element)))
+       (dotimes (,i (length ,sequence))
+         (let* ((,e (aref ,sequence ,i))
+                (,c (funcall ,f ,e)))
+           (if (< ,c ,min)
+               (progn (setf ,min ,c)
+                      (setf ,index ,i)
+                      (setf ,element ,e)))))
+       ,after)))
+
+(defun calculate-color-w (r g b)
+  (+ 4 (seq-min-index *full-color* (lambda (pixel)
+                                     (color-distance-w r g b
+                                                       (pixel-r pixel)
+                                                       (pixel-g pixel)
+                                                       (pixel-b pixel)))
+                      index)))
 
 (defun calculate-color (r g b)
-  (+ 4
-     (array-min-index
-      (array-map *full-color* (lambda (pixel)
-                                (color-distance r g b
-                                                (pixel-r pixel)
-                                                (pixel-g pixel)
-                                                (pixel-b pixel)))))))
+  (+ 4 (seq-min-index *full-color* (lambda (pixel)
+                                     (color-distance r g b
+                                                     (pixel-r pixel)
+                                                     (pixel-g pixel)
+                                                     (pixel-b pixel)))
+                      index)))
+;;
+
+(defun print-color-table (color-table)
+  (dotimes (i (length color-table))
+    (let* ((c (aref color-table i))
+           (r (pixel-r c))
+           (g (pixel-g c))
+           (b (pixel-b c)))
+      (format t "~A ~A ~A~%" r g b))))
+;;(print-color-table *full-color*)
+
 ;; ---------------------------------------------------------------
 ;; FS dithering
 
@@ -129,17 +160,15 @@
        (floor (* (pixel-b p0) ratio))))
 
 (defun find-closest-palette-color (pixel)
-  (let ((index (array-min-index
-                (array-map *full-color*
-                           (lambda (p)
-                             (color-distance (pixel-r pixel)
-                                             (pixel-g pixel)
-                                             (pixel-b pixel)
-                                             (pixel-r p)
-                                             (pixel-g p)
-                                             (pixel-b p)))))))
-    (aref *full-color* index)))
-;;(find-closest-palette-color (mpi 102 54 68))
+  (seq-min-index *full-color*
+                 (lambda (p)
+                   (color-distance-w (pixel-r pixel)
+                                     (pixel-g pixel)
+                                     (pixel-b pixel)
+                                     (pixel-r p)
+                                     (pixel-g p)
+                                     (pixel-b p)))
+                 element))
 
 (defun fs-dithering-f (image)
   (do ((x 1 (+ x 1))) ((= x 127))

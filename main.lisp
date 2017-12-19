@@ -23,7 +23,7 @@
 ;; (defparameter *lenna* (with-alien ((pathname c-string (make-alien-string "./Lenna.png")))
 ;;                         (read-image pathname)))
 
-(defparameter *lenna* (with-alien ((pathname c-string (make-alien-string "./jiangzhuxi.jpg")))
+(defparameter *lenna* (with-alien ((pathname c-string (make-alien-string "./Lenna.png")))
                         (read-image pathname)))
 
 (defparameter *nbt-head*
